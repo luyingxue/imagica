@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 
 from utils.config_manager import config_manager
 from ui.components import (
@@ -94,54 +94,16 @@ class MainWindow(QMainWindow):
         
         return section
 
-    def create_control_section(self):
-        """创建控制区域"""
-        section = SectionFrame()
-        layout = QHBoxLayout(section)
-        layout.setSpacing(12)
-        layout.setContentsMargins(15, 15, 15, 15)
-        
-        # 数量滑动器
-        self.number_slider = NumberSlider("生成数量", 1, 5, 3)
-        layout.addWidget(self.number_slider)
-        
-        layout.addStretch()
-        
-        # 生成按钮
-        self.generate_btn = ModernButton("🚀 开始生成")
-        layout.addWidget(self.generate_btn)
-        
-        return section
-    
-    def create_api_area(self):
+    def create_api_section(self):
         """创建API设置区域"""
-        self.api_group = QFrame()
-        self.api_group.setStyleSheet("""
-            QFrame {
-                background: white;
-                border: 1px solid rgba(148, 163, 184, 0.2);
-                border-radius: 12px;
-            }
-        """)
-        
-        layout = QVBoxLayout(self.api_group)
+        section = SectionFrame()
+        layout = QVBoxLayout(section)
         layout.setSpacing(10)
         layout.setContentsMargins(15, 15, 15, 15)
         
         # API设置标题
-        api_title = QLabel("🔑 API 设置")
-        font = QFont()
-        font.setPointSize(13)
-        font.setBold(True)
-        font.setFamily("Microsoft YaHei UI")
-        api_title.setFont(font)
-        api_title.setStyleSheet("""
-            QLabel {
-                color: #334155;
-                margin-bottom: 5px;
-            }
-        """)
-        layout.addWidget(api_title)
+        title = SectionTitle("🔑 API 设置")
+        layout.addWidget(title)
         
         # API Key 输入
         api_key_layout = QHBoxLayout()
@@ -151,21 +113,8 @@ class MainWindow(QMainWindow):
         api_key_label.setStyleSheet("color: #334155; min-width: 80px;")
         api_key_layout.addWidget(api_key_label)
         
-        self.api_key_edit = QLineEdit()
-        self.api_key_edit.setEchoMode(QLineEdit.Password)
-        self.api_key_edit.setPlaceholderText("请输入您的 API Key")
-        self.api_key_edit.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 11px;
-                background: white;
-            }
-            QLineEdit:focus {
-                border-color: #3b82f6;
-            }
-        """)
+        self.api_key_edit = CustomLineEdit("请输入您的 API Key")
+        self.api_key_edit.setEchoMode(self.api_key_edit.Password)
         api_key_layout.addWidget(self.api_key_edit)
         
         # 显示/隐藏密码按钮
@@ -195,38 +144,11 @@ class MainWindow(QMainWindow):
         api_url_label.setStyleSheet("color: #334155; min-width: 80px;")
         api_url_layout.addWidget(api_url_label)
         
-        self.api_url_edit = QLineEdit()
-        self.api_url_edit.setPlaceholderText("https://api.apicore.ai/v1/images/generations")
-        self.api_url_edit.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 11px;
-                background: white;
-            }
-            QLineEdit:focus {
-                border-color: #3b82f6;
-            }
-        """)
+        self.api_url_edit = CustomLineEdit("https://api.apicore.ai/v1/images/generations")
         api_url_layout.addWidget(self.api_url_edit)
         
         # 保存按钮
-        self.save_api_btn = QPushButton("💾 保存设置")
-        self.save_api_btn.setStyleSheet("""
-            QPushButton {
-                background: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-size: 11px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #2563eb;
-            }
-        """)
+        self.save_api_btn = ModernButton("💾 保存设置", primary=False)
         self.save_api_btn.clicked.connect(self.save_api_settings)
         api_url_layout.addWidget(self.save_api_btn)
         
@@ -234,7 +156,72 @@ class MainWindow(QMainWindow):
         
         # 加载已保存的设置
         self.load_api_settings()
-    
+        
+        return section
+
+    def create_control_section(self):
+        """创建控制区域"""
+        section = SectionFrame()
+        layout = QHBoxLayout(section)
+        layout.setSpacing(12)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # 数量滑动器
+        self.number_slider = NumberSlider("生成数量", 1, 5, 3)
+        layout.addWidget(self.number_slider)
+        
+        layout.addStretch()
+        
+        # 生成按钮
+        self.generate_btn = ModernButton("🚀 开始生成")
+        layout.addWidget(self.generate_btn)
+        
+        return section
+
+    def create_progress_section(self):
+        """创建进度区域"""
+        section = SectionFrame()
+        layout = QVBoxLayout(section)
+        layout.setSpacing(8)
+        layout.setContentsMargins(15, 12, 15, 12)
+        
+        self.progress_label = QLabel("📊 准备就绪")
+        font = QFont()
+        font.setPointSize(12)
+        font.setFamily("Microsoft YaHei UI")
+        self.progress_label.setFont(font)
+        self.progress_label.setStyleSheet("""
+            QLabel {
+                color: #334155;
+                margin-bottom: 5px;
+            }
+        """)
+        layout.addWidget(self.progress_label)
+        
+        # 使用自定义进度指示器
+        self.progress_bar = ProgressIndicator()
+        layout.addWidget(self.progress_bar)
+        
+        return section
+
+    def create_images_section(self):
+        """创建图片显示区域"""
+        section = SectionFrame()
+        layout = QVBoxLayout(section)
+        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        title = SectionTitle("🖼️ 生成的图片")
+        layout.addWidget(title)
+        
+        # 创建图片显示区域
+        self.image_display = ImageDisplayArea(self)
+        layout.addWidget(self.image_display)
+        
+        return section
+
+
+
     def toggle_password_visibility(self):
         """切换密码可见性"""
         if self.api_key_edit.echoMode() == QLineEdit.Password:
@@ -272,197 +259,6 @@ class MainWindow(QMainWindow):
         config_manager.set_api_url(api_url)
         
         QMessageBox.information(self, "保存成功", "API 设置已保存")
-    
-    def create_modern_button(self, text: str, color: str, primary: bool = False) -> QPushButton:
-        """创建现代化按钮"""
-        btn = QPushButton(text)
-        
-        if primary:
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {color}, stop:1 {self.darken_color(color, 10)});
-                    color: white;
-                    border: none;
-                    border-radius: 12px;
-                    padding: 6px 12px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    font-family: "Microsoft YaHei UI";
-                    min-width: 90px;
-                }}
-                QPushButton:hover {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {self.lighten_color(color, 10)}, stop:1 {color});
-                }}
-                QPushButton:pressed {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {self.darken_color(color, 20)}, stop:1 {self.darken_color(color, 10)});
-                }}
-                QPushButton:disabled {{
-                    background: #94a3b8;
-                    color: #f1f5f9;
-                }}
-            """)
-        else:
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: rgba(255, 255, 255, 0.8);
-                    color: {color};
-                    border: 2px solid {color};
-                    border-radius: 12px;
-                    padding: 6px 12px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    font-family: "Microsoft YaHei UI";
-                    min-width: 70px;
-                }}
-                QPushButton:hover {{
-                    background: {color};
-                    color: white;
-                }}
-                QPushButton:pressed {{
-                    background: {self.darken_color(color, 10)};
-                    border-color: {self.darken_color(color, 10)};
-                }}
-            """)
-        
-        return btn
-    
-    def lighten_color(self, color: str, percent: int) -> str:
-        """浅化颜色"""
-        # 简单实现，实际可以使用更复杂的颜色计算
-        color_map = {
-            "#3b82f6": "#60a5fa",
-            "#ef4444": "#f87171",
-            "#64748b": "#94a3b8"
-        }
-        return color_map.get(color, color)
-    
-    def darken_color(self, color: str, percent: int) -> str:
-        """深化颜色"""
-        color_map = {
-            "#3b82f6": "#2563eb",
-            "#ef4444": "#dc2626",
-            "#64748b": "#475569"
-        }
-        return color_map.get(color, color)
-
-    def create_progress_area(self):
-        """创建进度区域"""
-        self.progress_group = QFrame()
-        self.progress_group.setStyleSheet("""
-            QFrame {
-                background: white;
-                border: 1px solid rgba(148, 163, 184, 0.2);
-                border-radius: 12px;
-            }
-        """)
-        
-        layout = QVBoxLayout(self.progress_group)
-        layout.setSpacing(8)
-        layout.setContentsMargins(15, 12, 15, 12)
-        
-        self.progress_label = QLabel("📊 准备就绪")
-        font = QFont()
-        font.setPointSize(12)
-        font.setFamily("Microsoft YaHei UI")
-        self.progress_label.setFont(font)
-        self.progress_label.setStyleSheet("""
-            QLabel {
-                color: #334155;
-                margin-bottom: 5px;
-            }
-        """)
-        layout.addWidget(self.progress_label)
-        
-        # 使用 QProgressBar 创建发光运动效果
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setFixedHeight(6)
-        self.progress_bar.setRange(0, 0)  # 设置为不确定模式，显示忙碌状态
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: none;
-                border-radius: 3px;
-                background-color: #f1f5f9;
-                text-align: center;
-            }
-            QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #3b82f6, stop:0.5 #60a5fa, stop:1 #93c5fd);
-                border-radius: 3px;
-                animation: glow 2s ease-in-out infinite alternate;
-            }
-        """)
-        layout.addWidget(self.progress_bar)
-
-    def create_images_area(self):
-        """创建图片显示区域"""
-        self.images_group = QFrame()
-        self.images_group.setStyleSheet("""
-            QFrame {
-                background: white;
-                border: 1px solid rgba(148, 163, 184, 0.2);
-                border-radius: 12px;
-            }
-        """)
-        
-        layout = QVBoxLayout(self.images_group)
-        layout.setSpacing(10)
-        layout.setContentsMargins(15, 15, 15, 15)
-        
-        images_label = QLabel("🖼️ 生成的图片")
-        font = QFont()
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setFamily("Microsoft YaHei UI")
-        images_label.setFont(font)
-        images_label.setStyleSheet("""
-            QLabel {
-                color: #334155;
-                margin-bottom: 8px;
-            }
-        """)
-        layout.addWidget(images_label)
-        
-        # 滚动区域
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scroll_area.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background: transparent;
-            }
-            QScrollBar:vertical {
-                background: #f1f5f9;
-                width: 12px;
-                border-radius: 6px;
-            }
-            QScrollBar::handle:vertical {
-                background: #cbd5e1;
-                border-radius: 6px;
-                min-height: 20px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #94a3b8;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
-        
-        # 图片容器
-        self.images_container = QWidget()
-        self.images_container.setStyleSheet("QWidget { background: transparent; }")
-        self.images_layout = QGridLayout(self.images_container)
-        self.images_layout.setSpacing(15)
-        self.images_layout.setContentsMargins(10, 10, 10, 10)
-        
-        self.scroll_area.setWidget(self.images_container)
-        layout.addWidget(self.scroll_area)
 
     def setup_connections(self):
         """设置信号连接"""
@@ -481,10 +277,10 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "输入错误", "请输入 API Key")
             return
         
-        num_images = self.num_images_slider.value()
+        num_images = self.number_slider.value()
         
         # 清除之前的图片
-        self.clear_images()
+        self.image_display.clear_images()
         
         # 更新界面状态
         self.generate_btn.setEnabled(False)
@@ -507,16 +303,8 @@ class MainWindow(QMainWindow):
     def add_generated_image(self, index: int, image_data: str):
         """添加生成的图片"""
         try:
-            # 创建缩略图组件
-            thumbnail = ImageThumbnail(image_data, index, self)
-            
-            # 计算网格位置
-            row = index // 3  # 每行显示3张图片
-            col = index % 3
-            
-            # 添加到布局
-            self.images_layout.addWidget(thumbnail, row, col)
-            self.image_thumbnails.append(thumbnail)
+            # 使用图片显示区域添加图片
+            self.image_display.add_image(image_data, index)
             self.generated_images.append(image_data)
             
         except Exception as e:
@@ -526,7 +314,7 @@ class MainWindow(QMainWindow):
         """图片生成完成"""
         self.generate_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
-        self.progress_label.setText(f"✅ 完成！共生成 {len(self.generated_images)} 张图片")
+        self.progress_label.setText(f"✅ 完成！共生成 {self.image_display.get_image_count()} 张图片")
 
     def show_error(self, error_message: str):
         """显示错误信息"""
@@ -535,42 +323,17 @@ class MainWindow(QMainWindow):
         self.progress_label.setText("❌ 生成失败")
         QMessageBox.warning(self, "生成错误", error_message)
 
-    def clear_images(self):
-        """清除所有图片"""
-        # 移除所有缩略图组件
-        for thumbnail in self.image_thumbnails:
-            thumbnail.deleteLater()
-        
-        self.image_thumbnails.clear()
-        self.generated_images.clear()
-        
-        # 重置进度显示
-        self.progress_label.setText("📊 准备就绪")
-        self.progress_bar.setVisible(False)
+    def show_save_success(self, message: str):
+        """显示保存成功消息"""
+        self.progress_label.setText(f"💾 {message}")
+        # 3秒后恢复原状态
+        QTimer.singleShot(3000, lambda: self.progress_label.setText("📊 准备就绪"))
+
+    def show_save_error(self, message: str):
+        """显示保存错误消息"""
+        self.progress_label.setText(f"❌ {message}")
+        # 3秒后恢复原状态
+        QTimer.singleShot(3000, lambda: self.progress_label.setText("📊 准备就绪"))
     
-    # 移除复杂的showEvent和apply_text_wrapping方法，简化换行设置
-    # def showEvent(self, event):
-    #     """窗口显示事件"""
-    #     super().showEvent(event)
-    #     # 窗口显示后立即应用换行设置
-    #     QTimer.singleShot(100, self.apply_text_wrapping)
-    
-    # def apply_text_wrapping(self):
-    #     """应用文本换行设置"""
-    #     try:
-    #         from PyQt5.QtGui import QTextOption
-    #         text_option = QTextOption()
-    #         text_option.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
-    #         self.prompt_edit.document().setDefaultTextOption(text_option)
-    #         # 强制重新绘制
-    #         self.prompt_edit.viewport().update()
-    #         # 强制重新计算大小
-    #         self.prompt_edit.updateGeometry()
-    #     except Exception as e:
-    #         print(f"应用换行设置时出错: {e}")
-     
-    def update_num_display(self):
-        """更新生成数量显示标签"""
-        self.num_display_label.setText(str(self.num_images_slider.value()))
 
  
