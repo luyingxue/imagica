@@ -110,37 +110,7 @@ class ConfigManager:
             print(f"设置 API URL 失败: {str(e)}")
             return False
     
-    def get_default_settings(self) -> Dict[str, Any]:
-        """
-        获取默认设置
-        
-        Returns:
-            默认设置字典
-        """
-        return self.config.get('default_settings', {
-            'size': '1024x1536',
-            'quality': 'high',
-            'style': 'natural',
-            'num_images': 5,
-            'timeout': 300  # 默认 5 分钟超时
-        })
-    
-    def set_default_settings(self, settings: Dict[str, Any]) -> bool:
-        """
-        设置默认参数
-        
-        Args:
-            settings: 设置字典
-            
-        Returns:
-            设置成功返回 True，失败返回 False
-        """
-        try:
-            self.config['default_settings'] = settings
-            return self.save_config()
-        except Exception as e:
-            print(f"设置默认参数失败: {str(e)}")
-            return False
+
     
     def clear_config(self) -> bool:
         """
