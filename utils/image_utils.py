@@ -48,12 +48,14 @@ class ImageUtils:
             "Content-Type": "application/json"
         }
 
-    def generate_image(self, prompt: str) -> Optional[str]:
+    def generate_image(self, prompt: str, size: str = "1024x1536", model: str = "sora_image") -> Optional[str]:
         """
         调用 API 生成图像
         
         Args:
             prompt: 图像描述文本
+            size: 图像尺寸，如 "1024x1536" 或 "1536x1024"
+            model: 使用的模型，如 "sora_image" 或 "gpt-image-1"
             
         Returns:
             base64 编码的图像数据，失败时返回 None
@@ -64,10 +66,10 @@ class ImageUtils:
             
             # 构建请求数据
             payload = {
-                "model": "sora_image",
+                "model": model,
                 "prompt": prompt,
                 "n": 1,
-                "size": "1024x1536",
+                "size": size,
                 "background": "opaque",
                 "moderation": "auto",
                 "output_format": "png",

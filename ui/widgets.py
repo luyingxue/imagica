@@ -30,11 +30,13 @@ class ImageGenerationThread(QThread):
     generation_completed = pyqtSignal()  # 所有图像生成完成信号
     error_occurred = pyqtSignal(str)  # 错误信号
 
-    def __init__(self, prompt: str, num_images: int, api_key: str):
+    def __init__(self, prompt: str, num_images: int, api_key: str, size: str = "1024x1536", model: str = "sora_image"):
         super().__init__()
         self.prompt = prompt
         self.num_images = num_images
         self.api_key = api_key
+        self.size = size
+        self.model = model
         self.image_utils = ImageUtils(api_key)
 
     def run(self):
@@ -47,7 +49,7 @@ class ImageGenerationThread(QThread):
                 # 提交所有生成任务
                 futures = {}
                 for i in range(self.num_images):
-                    future = executor.submit(self.image_utils.generate_image, self.prompt)
+                    future = executor.submit(self.image_utils.generate_image, self.prompt, self.size, self.model)
                     futures[future] = i
 
                 # 使用 as_completed 来处理完成的任务，提高响应速度

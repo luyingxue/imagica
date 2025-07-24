@@ -14,7 +14,8 @@ from PyQt5.QtGui import QIcon, QFont
 from utils.config_manager import config_manager
 from ui.components import (
     HeaderComponent, SectionFrame, SectionTitle, 
-    CustomTextEdit, CustomLineEdit, ModernButton, NumberSlider
+    CustomTextEdit, CustomLineEdit, ModernButton, NumberSlider,
+    RatioSelector, ModelSelector
 )
 from ui.widgets import (
     ImageGenerationThread, ProgressIndicator, ImageDisplayArea
@@ -163,18 +164,72 @@ class MainWindow(QMainWindow):
         """创建控制区域"""
         section = SectionFrame()
         layout = QHBoxLayout(section)
-        layout.setSpacing(12)
+        layout.setSpacing(20)
         layout.setContentsMargins(15, 15, 15, 15)
+        layout.setAlignment(Qt.AlignVCenter)  # 设置垂直居中对齐
         
         # 数量滑动器
         self.number_slider = NumberSlider("生成数量", 1, 5, 3)
-        layout.addWidget(self.number_slider)
+        layout.addWidget(self.number_slider, 0, Qt.AlignVCenter)
+        
+        # 添加分隔线（视觉分隔）
+        separator = QLabel("|")
+        separator.setStyleSheet("color: #e2e8f0; font-size: 18px; margin: 0 8px;")
+        separator.setAlignment(Qt.AlignCenter)
+        layout.addWidget(separator, 0, Qt.AlignVCenter)
+        
+        # 比例选择器
+        self.ratio_selector = RatioSelector()
+        layout.addWidget(self.ratio_selector, 0, Qt.AlignVCenter)
+        
+        # 添加分隔线
+        separator2 = QLabel("|")
+        separator2.setStyleSheet("color: #e2e8f0; font-size: 18px; margin: 0 8px;")
+        separator2.setAlignment(Qt.AlignCenter)
+        layout.addWidget(separator2, 0, Qt.AlignVCenter)
+        
+        # 模型选择器
+        self.model_selector = ModelSelector()
+        layout.addWidget(self.model_selector, 0, Qt.AlignVCenter)
         
         layout.addStretch()
         
-        # 生成按钮
-        self.generate_btn = ModernButton("🚀 开始生成")
-        layout.addWidget(self.generate_btn)
+        # 使用优化的生成按钮 - 更大尺寸但无动画
+        self.generate_btn = ModernButton("🚀 开始生成", "#3b82f6", True)
+        self.generate_btn.setMinimumHeight(60)  # 设置更大的高度
+        self.generate_btn.setMinimumWidth(130)
+        # 重写样式使其更醒目
+        self.generate_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #3b82f6, stop:0.5 #60a5fa, stop:1 #2563eb);
+                color: white;
+                border: 3px solid #2563eb;
+                border-radius: 15px;
+                padding: 15px 25px;
+                font-size: 14px;
+                font-weight: bold;
+                font-family: "Microsoft YaHei UI";
+                min-width: 120px;
+                min-height: 50px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #2563eb, stop:0.5 #3b82f6, stop:1 #1d4ed8);
+                border: 4px solid #1d4ed8;
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #1d4ed8, stop:0.5 #2563eb, stop:1 #1e3a8a);
+                border: 3px solid #1e3a8a;
+            }
+            QPushButton:disabled {
+                background: #94a3b8;
+                color: #f1f5f9;
+                border: 3px solid #64748b;
+            }
+        """)
+        layout.addWidget(self.generate_btn, 0, Qt.AlignVCenter)
         
         return section
 
@@ -279,6 +334,10 @@ class MainWindow(QMainWindow):
         
         num_images = self.number_slider.value()
         
+        # 获取选择的比例和模型
+        selected_size = self.ratio_selector.get_current_key()
+        selected_model = self.model_selector.get_current_key()
+        
         # 清除之前的图片
         self.image_display.clear_images()
         
@@ -288,7 +347,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(True)
         
         # 启动生成线程
-        self.generation_thread = ImageGenerationThread(prompt, num_images, api_key)
+        self.generation_thread = ImageGenerationThread(prompt, num_images, api_key, selected_size, selected_model)
         self.generation_thread.progress_updated.connect(self.update_progress)
         self.generation_thread.image_generated.connect(self.add_generated_image)
         self.generation_thread.generation_completed.connect(self.generation_finished)

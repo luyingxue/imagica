@@ -265,7 +265,7 @@ class NumberSlider(QFrame):
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
         
         # 标题行
         title_layout = QHBoxLayout()
@@ -294,9 +294,10 @@ class NumberSlider(QFrame):
                 color: #3b82f6;
                 background-color: #eff6ff;
                 border: 2px solid #3b82f6;
-                border-radius: 15px;
-                padding: 5px 12px;
+                border-radius: 12px;
+                padding: 6px 12px;
                 min-width: 20px;
+                min-height: 14px;
                 text-align: center;
             }
         """)
@@ -385,4 +386,136 @@ class NumberSlider(QFrame):
     
     def setValue(self, value: int):
         """设置值"""
-        self.slider.setValue(value) 
+        self.slider.setValue(value)
+
+
+class OptionSelector(QFrame):
+    """通用选项选择器组件"""
+    
+    option_changed = pyqtSignal(str)
+    
+    def __init__(self, title: str, options: dict, default_key: str = None, parent=None):
+        super().__init__(parent)
+        self.title = title
+        self.options = options  # {key: display_name}
+        self.default_key = default_key or list(options.keys())[0]
+        self.current_key = self.default_key
+        self.buttons = []
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """设置UI"""
+        self.setStyleSheet("QFrame { background: transparent; }")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        
+        # 标题
+        title_label = QLabel(self.title)
+        font = QFont()
+        font.setPointSize(11)
+        font.setBold(True)
+        font.setFamily("Microsoft YaHei UI")
+        title_label.setFont(font)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #334155;
+                padding: 0px;
+            }
+        """)
+        layout.addWidget(title_label)
+        
+        # 选项按钮
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setSpacing(4)
+        
+        for key, display_name in self.options.items():
+            btn = QPushButton(display_name)
+            btn.setCheckable(True)
+            btn.setChecked(key == self.default_key)
+            btn.clicked.connect(lambda checked, k=key: self.select_option(k))
+            
+            # 设置按钮样式 - 简化版本，无复杂效果
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: #f8fafc;
+                    color: #64748b;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    font-family: "Microsoft YaHei UI";
+                    min-width: 50px;
+                    min-height: 26px;
+                }
+                QPushButton:hover {
+                    background: #e2e8f0;
+                    border-color: #cbd5e1;
+                }
+                QPushButton:checked {
+                    background: #3b82f6;
+                    color: white;
+                    border-color: #2563eb;
+                }
+                QPushButton:checked:hover {
+                    background: #2563eb;
+                }
+            """)
+            
+            self.buttons.append(btn)
+            buttons_layout.addWidget(btn)
+        
+        layout.addLayout(buttons_layout)
+    
+    def select_option(self, key: str):
+        """选择选项"""
+        self.current_key = key
+        
+        # 更新按钮状态
+        for btn in self.buttons:
+            btn.setChecked(False)
+        
+        # 设置选中按钮
+        for i, (k, _) in enumerate(self.options.items()):
+            if k == key:
+                self.buttons[i].setChecked(True)
+                break
+        
+        # 发出信号
+        self.option_changed.emit(key)
+    
+    def get_current_key(self) -> str:
+        """获取当前选择的key"""
+        return self.current_key
+    
+    def get_current_value(self) -> str:
+        """获取当前选择的显示名称"""
+        return self.options[self.current_key]
+
+
+class RatioSelector(OptionSelector):
+    """比例选择器"""
+    
+    def __init__(self, parent=None):
+        options = {
+            "1024x1536": "竖屏",
+            "1536x1024": "横屏"
+        }
+        super().__init__("📐 比例", options, "1024x1536", parent)
+
+
+class ModelSelector(OptionSelector):
+    """模型选择器"""
+    
+    def __init__(self, parent=None):
+        options = {
+            "sora_image": "Sora",
+            "gpt-image-1": "GPT-4o"
+        }
+        super().__init__("🤖 模型", options, "sora_image", parent)
+
+
+ 
