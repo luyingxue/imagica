@@ -1,8 +1,10 @@
-# Python标准忽略
+# Python 编译文件
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# 分发/打包文件
 .Python
 build/
 develop-eggs/
@@ -16,18 +18,32 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# PyInstaller
-#  通常这些文件由脚本自动生成并应该忽略
+# PyInstaller 相关文件
 *.manifest
 *.spec
 
-# 虚拟环境
+# 单元测试 / 覆盖率报告
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# 环境变量文件
 .env
 .venv
 env/
@@ -36,69 +52,41 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDE和编辑器
+# IDE 配置文件
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# 操作系统文件
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-Desktop.ini
 
-# 配置和敏感信息
+# 项目特定文件
 .apikey
-config.json
-settings.json
-*.key
-*.secret
-
-# 生成的图片和用户数据
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.bmp
-generated/
-output/
-saves/
-downloads/
-
-# 构建和打包产物
-dist/
-build/
-*.exe
-*.app
-*.deb
-*.rpm
-发布包/
-AI图像生成器.spec
-
-# 日志文件
 *.log
 logs/
-
-# 测试文件
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-
-# Jupyter Notebook
-.ipynb_checkpoints
+*.db
+*.sqlite
+*.sqlite3
 
 # 临时文件
-*.tmp
-*.temp
-temp/
 tmp/
+temp/
+*.tmp
+*.bak
 
-# 批处理和脚本文件（可选）
-# *.bat
-# *.sh
+# 发布文件
+release/*.exe
+release/*.zip
+release/*.tar.gz
 
-# 本地开发文件
-local/
-.local/
-test_images/ 
+# 测试输出
+test-reports/
+.testmondata 

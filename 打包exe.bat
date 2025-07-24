@@ -1,85 +1,113 @@
 @echo off
-chcp 65001 >nul
+chcp 65001 >nul 2>&1
 title AI图像生成器 - 打包工具
 
 echo.
-echo 🎨 AI图像生成器 - 打包工具
-echo ================================
+echo 🔨 =====================================
+echo    AI 图像生成器 - exe打包工具
+echo    CustomTkinter轻量级版本打包
+echo =====================================
 echo.
 
-echo 📦 正在检查PyInstaller...
-python -c "import PyInstaller" 2>nul
+:: 检查Python环境
+python --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ PyInstaller未安装，正在安装...
-    pip install pyinstaller
-    if errorlevel 1 (
-        echo ❌ PyInstaller安装失败！
-        pause
-        exit /b 1
-    )
-    echo ✅ PyInstaller安装成功
-) else (
-    echo ✅ PyInstaller已安装
-)
-
-echo.
-echo 🧹 清理之前的构建文件...
-if exist build rmdir /s /q build
-if exist dist rmdir /s /q dist
-if exist __pycache__ rmdir /s /q __pycache__
-for %%f in (*.spec) do del "%%f"
-
-echo.
-echo 🚀 开始构建exe文件...
-
-REM 检查图标文件
-if exist "assets\icon.ico" (
-    set ICON_OPTION=--icon=assets\icon.ico
-    echo ✅ 使用图标文件: assets\icon.ico
-) else (
-    set ICON_OPTION=
-    echo ⚠️ 图标文件不存在，使用默认图标
-)
-
-REM 执行PyInstaller命令
-pyinstaller --onefile --windowed --name="AI图像生成器" --add-data="assets;assets" --hidden-import=PyQt5.sip --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=PIL --hidden-import=PIL._tkinter_finder --hidden-import=openai --hidden-import=requests --clean --noconfirm %ICON_OPTION% main.py
-
-if errorlevel 1 (
+    echo ❌ 错误：未找到 Python 环境
+    echo 请安装 Python 3.7+ 并添加到 PATH
     echo.
-    echo ❌ 打包失败！
-    echo.
-    echo 💡 常见解决方案:
-    echo 1. 确保所有依赖包已正确安装
-    echo 2. 尝试以管理员身份运行此批处理文件
-    echo 3. 检查防病毒软件是否阻止了打包过程
-    echo 4. 确保在项目根目录下运行
     pause
     exit /b 1
 )
 
-echo.
-echo 🎉 打包完成！
-echo 📁 exe文件位置: dist\AI图像生成器.exe
-
-REM 检查文件大小
-if exist "dist\AI图像生成器.exe" (
-    for %%A in ("dist\AI图像生成器.exe") do set SIZE=%%~zA
-    set /a SIZE_MB=%SIZE%/1024/1024
-    echo 📊 exe文件大小: %SIZE_MB% MB
+:: 检查是否在项目根目录
+if not exist "main.py" (
+    echo ❌ 错误：请在项目根目录下运行此脚本
+    echo.
+    pause
+    exit /b 1
 )
 
+:: 显示选择菜单
+echo 📋 请选择打包方式：
 echo.
-echo 📋 使用说明:
-echo 1. 将 dist\AI图像生成器.exe 复制到目标位置
-echo 2. 将 assets 文件夹复制到exe文件同目录
-echo 3. 确保目标机器有网络连接
-echo 4. 首次运行需要配置OpenAI API Key
+echo   1. 完整版打包 (build_exe.py)
+echo      - 功能完整，包含所有特性
+echo      - 体积稍大，兼容性好
+echo.
+echo   2. 轻量版打包 (build_exe_simple.py)  [推荐]
+echo      - 体积优化，启动更快
+echo      - 适合一般用户使用
+echo.
+echo   3. 退出
 echo.
 
-echo 是否要打开dist文件夹？(Y/N)
-set /p choice=
-if /i "%choice%"=="Y" (
-    explorer dist
+set /p choice="请输入选择 (1-3): "
+
+if "%choice%"=="1" (
+    echo.
+    echo 🔨 开始完整版打包...
+    python build_exe.py
+    goto :package_done
+) else if "%choice%"=="2" (
+    echo.
+    echo 🔨 开始轻量版打包...
+    python build_exe_simple.py
+    goto :package_done
+) else if "%choice%"=="3" (
+    echo 👋 退出打包
+    goto :end
+) else (
+    echo ❌ 无效选择，请重新运行脚本
+    pause
+    exit /b 1
 )
 
+:package_done
+if errorlevel 1 (
+    echo.
+    echo ❌ 打包失败！
+    echo.
+    echo 💡 常见解决方案：
+    echo    1. 确保所有依赖已安装: pip install -r requirements.txt
+    echo    2. 安装 PyInstaller: pip install pyinstaller
+    echo    3. 以管理员身份运行此脚本
+    echo    4. 检查防病毒软件是否阻止打包
+    echo.
+) else (
+    echo.
+    echo ✅ 打包完成！
+    echo.
+    echo 📂 输出文件位置: dist\
+    echo 📊 查看文件大小和详情...
+    
+    if exist "dist\AI图像生成器.exe" (
+        echo.
+        echo 📄 文件信息：
+        dir "dist\AI图像生成器.exe" | findstr "AI图像生成器.exe"
+    ) else if exist "dist\AI图像生成器_轻量版.exe" (
+        echo.
+        echo 📄 文件信息：
+        dir "dist\AI图像生成器_轻量版.exe" | findstr "AI图像生成器_轻量版.exe"
+    )
+    
+    echo.
+    echo 🎉 打包成功完成！
+    echo.
+    echo 📋 后续步骤：
+    echo    1. 在 dist\ 目录中找到生成的 exe 文件
+    echo    2. 可选：将 assets 文件夹复制到 exe 同目录
+    echo    3. 测试 exe 文件是否正常运行
+    echo    4. 分发给其他用户使用
+    echo.
+    echo 💡 提示：
+    echo    - exe文件可独立运行，无需Python环境
+    echo    - 首次运行需要配置API Key
+    echo    - 建议在不同系统上测试兼容性
+    echo.
+)
+
+:end
+echo 👋 感谢使用 AI 图像生成器打包工具！
+echo 📧 如有问题，请查看项目文档或提交 Issue
+echo.
 pause 

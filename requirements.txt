@@ -1,4 +1,14 @@
-customtkinter>=5.2.0
-requests>=2.28.0
-Pillow>=9.0.0
-openai>=1.0.0 
+# 核心UI框架
+customtkinter>=5.2.0,<6.0.0
+
+# 网络请求
+requests>=2.28.0,<3.0.0
+
+# 图像处理
+Pillow>=9.5.0,<11.0.0
+
+# OpenAI API客户端
+openai>=1.0.0,<2.0.0
+
+# 类型注解支持 (Python < 3.9)
+typing-extensions>=4.5.0,<5.0.0 

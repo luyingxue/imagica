@@ -302,52 +302,88 @@ class MainWindow(ctk.CTk):
     
     def save_api_settings(self):
         """保存API设置"""
-        # 获取输入值
-        api_key = self.api_key_entry.get().strip()
-        api_url = self.api_url_entry.get().strip()
-        
-        # 保存配置
-        self.config_manager.set('api_key', api_key)
-        self.config_manager.set('api_url', api_url)
-        
-        # 显示成功消息
-        messagebox.showinfo("Success", "API settings saved successfully")
+        try:
+            # 获取输入值
+            api_key = self.api_key_entry.get().strip()
+            api_url = self.api_url_entry.get().strip()
+            
+            # 验证输入
+            from utils.validators import InputValidator
+            if api_key:
+                InputValidator.validate_api_key(api_key)
+            if api_url:
+                InputValidator.validate_url(api_url)
+            
+            # 保存配置
+            if api_key:
+                config_manager.set_api_key(api_key)
+            if api_url:
+                config_manager.set_api_url(api_url)
+            
+            # 显示成功消息
+            from config.constants import SUCCESS_MESSAGES
+            messagebox.showinfo("成功", SUCCESS_MESSAGES["api_settings_saved"])
+            
+        except Exception as e:
+            # 记录错误并显示用户友好的消息
+            from utils.logger import get_logger, log_exception
+            logger = get_logger(__name__)
+            log_exception(logger, e, "保存API设置时发生错误")
+            messagebox.showerror("错误", f"保存设置失败: {str(e)}")
     
     def start_generation(self):
         """开始生成图片"""
         if self.is_generating:
             return
         
-        # 获取输入内容
-        prompt = self.prompt_textbox.get_text()
-        if not prompt.strip():
-            messagebox.showwarning("Input Error", "Please enter image description")
+        try:
+            # 获取输入内容
+            prompt = self.prompt_textbox.get_text()
+            api_key = self.api_key_entry.get().strip()
+            api_url = self.api_url_entry.get().strip()
+            
+            # 验证输入
+            from utils.validators import validate_user_input, validate_generation_request
+            from config.constants import ERROR_MESSAGES
+            
+            validate_user_input(api_key, prompt, api_url or config_manager.get_api_url())
+            
+            # 获取生成参数
+            num_images = self.number_slider.get_value()
+            size = self.ratio_selector.get_current_key()
+            model = self.model_selector.get_current_key()
+            
+            # 验证生成参数
+            validate_generation_request(num_images, size, model, prompt)
+            
+        except Exception as e:
+            # 显示验证错误
+            from utils.logger import get_logger, log_exception
+            logger = get_logger(__name__)
+            log_exception(logger, e, "输入验证失败")
+            messagebox.showerror("输入错误", str(e))
             return
-        
-        # 检查API Key
-        api_key = self.api_key_entry.get().strip()
-        if not api_key:
-            messagebox.showwarning("输入错误", "请输入 API Key")
-            return
-        
-        # 获取参数
-        num_images = self.number_slider.get_value()
-        size = self.ratio_selector.get_current_key()
-        model = self.model_selector.get_current_key()
         
         # 清除之前的图片
         self.image_display.clear_images()
         
         # 更新界面状态
+        from config.constants import COLORS, ICONS, STATUS_MESSAGES
+        
         self.is_generating = True
         self.generate_btn.configure(
             state="disabled", 
-            text="⏳\nGenerating...",
-            fg_color=("gray70", "gray40"),
-            hover_color=("gray70", "gray40")
+            text=f"{ICONS['loading']}\n生成中...",
+            fg_color=COLORS["disabled"],
+            hover_color=COLORS["disabled"]
         )
-        self.progress_frame.set_status(f"🔄 正在生成 {num_images} 张图片...")
+        self.progress_frame.set_status(f"{STATUS_MESSAGES['generating']} ({num_images} 张)")
         self.progress_frame.start_indeterminate()
+        
+        # 记录用户操作
+        from utils.logger import get_logger, log_user_action
+        logger = get_logger(__name__)
+        log_user_action(logger, "开始生成图像", f"数量: {num_images}, 尺寸: {size}, 模型: {model}")
         
         # 创建生成管理器
         self.generation_manager = GenerationManager(
@@ -378,15 +414,24 @@ class MainWindow(ctk.CTk):
     
     def on_generation_complete(self):
         """所有生成完成"""
+        from config.constants import COLORS, ICONS, STATUS_MESSAGES, SUCCESS_MESSAGES
+        from utils.logger import get_logger, log_user_action
+        
         self.is_generating = False
         self.generate_btn.configure(
             state="normal", 
-            text="🚀\nGenerate",
-            fg_color=("#2563eb", "#1d4ed8"),
-            hover_color=("#1d4ed8", "#1e3a8a")
+            text=f"{ICONS['generate']}\n生成",
+            fg_color=COLORS["primary"],
+            hover_color=COLORS["primary_hover"]
         )
         self.progress_frame.stop_indeterminate()
-        self.progress_frame.set_status(f"✅ 完成！共生成 {self.image_display.get_image_count()} 张图片")
+        
+        image_count = self.image_display.get_image_count()
+        self.progress_frame.set_status(f"{ICONS['success']} 完成！共生成 {image_count} 张图片")
+        
+        # 记录操作完成
+        logger = get_logger(__name__)
+        log_user_action(logger, "图像生成完成", f"成功生成 {image_count} 张图片")
     
     def on_closing(self):
         """窗口关闭事件"""
