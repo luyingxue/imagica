@@ -8,10 +8,10 @@ import base64
 import io
 import os
 import requests
-from typing import Optional, Union
-from PIL import Image
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QByteArray
+import threading
+from typing import Optional, Union, Callable
+from PIL import Image, ImageTk
+import tkinter as tk
 
 from utils.config_manager import config_manager
 
@@ -48,6 +48,26 @@ class ImageUtils:
             "Content-Type": "application/json"
         }
 
+    def generate_image_async(self, prompt: str, size: str = "1024x1536", model: str = "sora_image", 
+                           callback: Callable = None, index: int = 0) -> None:
+        """
+        异步调用 API 生成图像
+        
+        Args:
+            prompt: 图像描述文本
+            size: 图像尺寸，如 "1024x1536" 或 "1536x1024"
+            model: 使用的模型，如 "sora_image" 或 "gpt-image-1"
+            callback: 完成时的回调函数
+            index: 图像索引
+        """
+        def generate():
+            result = self.generate_image(prompt, size, model)
+            if callback:
+                callback(index, result)
+        
+        thread = threading.Thread(target=generate, daemon=True)
+        thread.start()
+
     def generate_image(self, prompt: str, size: str = "1024x1536", model: str = "sora_image") -> Optional[str]:
         """
         调用 API 生成图像
@@ -81,8 +101,6 @@ class ImageUtils:
             
             # 打印调试信息
             print(f"发送请求到: {self.api_url}")
-            print(f"请求头: {self.headers}")
-            print(f"请求数据: {payload}")
             print(f"⏳ 开始生成图像，超时时间设置为 {timeout} 秒...")
             
             # 发送请求
@@ -95,20 +113,16 @@ class ImageUtils:
             
             # 打印响应信息
             print(f"响应状态码: {response.status_code}")
-            print(f"响应头: {dict(response.headers)}")
             
             # 检查响应
             if response.status_code == 200:
                 result = response.json()
-                # 缩略显示响应数据，不打印完整的图像数据
-                result_summary = {k: v if k != "data" else f"[图像数据 - {len(v)} 项]" for k, v in result.items()}
-                print(f"响应数据: {result_summary}")
                 if "data" in result and len(result["data"]) > 0:
                     b64_data = result["data"][0]["b64_json"]
                     print(f"图像数据长度: {len(b64_data)} 字符")
                     return b64_data
                 else:
-                    print(f"API 响应中没有图像数据: {result_summary}")
+                    print(f"API 响应中没有图像数据")
                     return None
             else:
                 print(f"API 请求失败: {response.status_code} - {response.text}")
@@ -125,33 +139,47 @@ class ImageUtils:
             return None
 
     @staticmethod
-    def base64_to_pixmap(base64_data: str) -> Optional[QPixmap]:
+    def base64_to_tk_image(base64_data: str, size: tuple = None, use_ctk_image: bool = True) -> Optional:
         """
-        将 base64 图像数据转换为 QPixmap
+        将 base64 图像数据转换为 tkinter/CustomTkinter 兼容的图像
         
         Args:
             base64_data: base64 编码的图像数据
+            size: 可选的图像大小 (width, height)
+            use_ctk_image: 是否使用CTkImage (True) 或 PhotoImage (False)
             
         Returns:
-            QPixmap 对象，失败时返回 None
+            CTkImage 对象或 ImageTk.PhotoImage 对象，失败时返回 None
         """
         try:
             # 解码 base64 数据
             image_bytes = base64.b64decode(base64_data)
             
-            # 创建 QByteArray 和 QPixmap
-            byte_array = QByteArray(image_bytes)
-            pixmap = QPixmap()
+            # 创建 PIL Image
+            image = Image.open(io.BytesIO(image_bytes))
             
-            # 加载图像数据
-            if pixmap.loadFromData(byte_array):
-                return pixmap
+            # 如果指定了大小，调整图像大小
+            if size:
+                image = image.resize(size, Image.Resampling.LANCZOS)
+            
+            if use_ctk_image:
+                # 使用CTkImage，适用于CustomTkinter控件
+                try:
+                    import customtkinter as ctk
+                    ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size or image.size)
+                    return ctk_image
+                except Exception as e:
+                    print(f"创建CTkImage失败，回退到PhotoImage: {str(e)}")
+                    # 回退到PhotoImage
+                    photo = ImageTk.PhotoImage(image)
+                    return photo
             else:
-                print("无法从数据创建 QPixmap")
-                return None
+                # 直接使用PhotoImage，适用于标准tkinter控件
+                photo = ImageTk.PhotoImage(image)
+                return photo
                 
         except Exception as e:
-            print(f"转换 base64 到 QPixmap 时发生错误: {str(e)}")
+            print(f"转换 base64 到图像时发生错误: {str(e)}")
             return None
 
     @staticmethod
